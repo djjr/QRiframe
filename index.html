@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deck QR</title>
+  <style>
+    :root { --ink: #1d1d1f; --muted: #6b6b70; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    :root[data-theme="dark"] { --ink: #ececee; --muted: #9a9ba1; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: transparent; color: var(--ink); }
+    /* Fill the iframe: QR as large as fits, caption underneath. */
+    main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh; padding: 2vh; text-align: center; }
+    #qr { width: min(92vw, 78vh); background: #fff; padding: 2%; border-radius: 3%; }
+    #qr svg { display: block; width: 100%; height: auto; }
+    .cap { font-size: clamp(.8rem, 4.5vh, 2rem); font-weight: 600; word-break: break-all; }
+    .hint { color: var(--muted); max-width: 40em; line-height: 1.5; }
+    code { background: rgb(127 127 127 / .15); padding: .1em .35em; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="qr" hidden></div>
+    <div id="cap" class="cap"></div>
+    <p id="hint" class="hint" hidden>
+      Add the address to encode to this page's URL, e.g.<br>
+      <code>?url=https://slides.com/you/your-deck</code><br>
+      Optional: <code>&amp;label=Follow along</code> (or <code>&amp;label=</code> for none), <code>&amp;theme=dark</code>
+    </p>
+  </main>
+
+  <script src="vendor/qrcode.js"></script>
+  <script>
+    const p = new URLSearchParams(location.search);
+    document.documentElement.dataset.theme = p.get('theme') || 'light';
+
+    // An iframe can't read its parent's address, so ?url= is normally required.
+    // Fall back to the referrer only if it carries a full path.
+    let url = p.get('url');
+    try {
+      if (!url && document.referrer && new URL(document.referrer).pathname.length > 1) url = document.referrer;
+    } catch {}
+
+    if (url && /^https?:\/\//i.test(url)) {
+      qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+      const qr = qrcode(0, 'M'); // auto size, medium error correction
+      qr.addData(url);
+      qr.make();
+      const box = document.getElementById('qr');
+      box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true, alt: 'QR code for ' + url });
+      box.hidden = false;
+      const label = p.get('label');
+      document.getElementById('cap').textContent = label !== null ? label : url.replace(/^https?:\/\//, '');
+    } else {
+      document.getElementById('hint').hidden = false;
+    }
+  </script>
+</body>
+</html>

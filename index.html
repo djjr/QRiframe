@@ -8,12 +8,17 @@
     :root { --ink: #1d1d1f; --muted: #6b6b70; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
     :root[data-theme="dark"] { --ink: #ececee; --muted: #9a9ba1; }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     html, body { height: 100%; margin: 0; background: transparent; color: var(--ink); }
     /* Fill the iframe: QR as large as fits, caption underneath. */
-    main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh; padding: 2vh; text-align: center; }
-    #qr { width: min(92vw, 78vh); background: #fff; padding: 2%; border-radius: 3%; }
-    #qr svg { display: block; width: 100%; height: auto; }
-    .cap { font-size: clamp(.8rem, 4.5vh, 2rem); font-weight: 600; word-break: break-all; }
+    main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1vh; padding: 1vh; text-align: center; }
+    /* main is a size container: the code is the largest square that fits
+       beside the caption's height (--cap), and code + caption stay centered together. */
+    main { container-type: size; --cap: calc(clamp(.8rem, 4.5vh, 2rem) * 1.4 + 1vh); }
+    main.nocap { --cap: 0px; }
+    #qr { --s: min(100cqw, calc(100cqh - var(--cap))); width: var(--s); height: var(--s); flex: none; background: #fff; padding: 4%; border-radius: 3%; /* white quiet zone so it scans on dark slides */ }
+    #qr svg { display: block; width: 100%; height: 100%; }
+    .cap { max-width: 100%; font-size: clamp(.8rem, 4.5vh, 2rem); font-weight: 600; word-break: break-all; }
     .hint { color: var(--muted); max-width: 40em; line-height: 1.5; }
     code { background: rgb(127 127 127 / .15); padding: .1em .35em; border-radius: 4px; }
   </style>
@@ -51,6 +56,7 @@
       box.hidden = false;
       const label = p.get('label');
       document.getElementById('cap').textContent = label !== null ? label : url.replace(/^https?:\/\//, '');
+      if (label === '') document.querySelector('main').classList.add('nocap');
     } else {
       document.getElementById('hint').hidden = false;
     }
